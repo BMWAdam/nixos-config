@@ -1,0 +1,15 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p jq
+
+# 1. Get the current layout once immediately (so the widget isn't empty on start)
+swaymsg -r -t get_inputs | jq -r '.[] | select(.type == "keyboard") | .xkb_active_layout_name | .[0:2]' | head -n 1
+
+# 2. Subscribe to changes and filter duplicates
+swaymsg -r -t subscribe -m '["input"]' | \
+jq --unbuffered -r '.input.xkb_active_layout_name | .[0:2]' | \
+while read -r layout; do
+    if [ "$layout" != "$last_layout" ]; then
+        echo "$layout"
+        last_layout="$layout"
+    fi
+done

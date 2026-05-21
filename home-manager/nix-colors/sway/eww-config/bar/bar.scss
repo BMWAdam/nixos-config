@@ -1,0 +1,111 @@
+* {
+  all: unset; // Unsets everything so you can style everything from scratch
+  font-family: unset;
+}
+
+// Global Styles
+.bar {
+  background-color: rgba(
+    red(colors.$base03), 
+    green(colors.$base03), 
+    blue(colors.$base03), 
+    0.8
+  );
+  color: colors.$base06;
+  // padding: 10px;
+}
+
+.sidestuff slider {
+  all: unset;
+  color: colors.$base06;
+}
+
+// Generic Metric Styles (Layout only)
+.metric scale trough {
+  all: unset;
+  background-color: rgba(
+    red(colors.$base03), 
+    green(colors.$base03), 
+    blue(colors.$base03), 
+    1
+  );
+  border-radius: 50px;
+  min-height: 3px;
+  min-width: 50px;
+}
+
+.metric scale trough highlight {
+  all: unset;
+  border-radius: 10px;
+}
+
+// Volume (Purple - base0E)
+.metric.vol scale trough highlight {
+  background-color: rgba(red(colors.$base0e), green(colors.$base0e), blue(colors.$base0e), 1);
+}
+
+.metric.vol scale trough {
+  margin-left: 10px;
+  margin-right: 20px;
+}
+
+// RAM (Yellow - base0A)
+.metric.ram scale trough highlight {
+  background-color: rgba(red(colors.$base0a), green(colors.$base0a), blue(colors.$base0a), 1);
+}
+
+.metric.ram scale trough {
+  margin-left: 10px;
+  margin-right: 20px;
+}
+
+// Disk (Green - base0B)
+.metric.dsk scale trough highlight {
+  background-color: rgba(red(colors.$base0b), green(colors.$base0b), blue(colors.$base0b), 1);
+}
+
+.metric.dsk scale trough {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.label-ram {
+  font-size: large;
+}
+
+.workspaces button:hover {
+  color: colors.$base06;
+}
+
+.label {
+  font-family: "Symbols Nerd Font";
+}
+
+.text {
+  font-family: "TeX Gyre Heros";
+  margin-left: 5px;
+}
+
+.text_container {
+  margin-left: 5px;
+  margin-right: 10px;
+}
+
+.workspace {
+  font-family: "TeX Gyre Heros";
+  padding-left: 14px;
+  padding-right: 14px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.workspace.activews {
+  border: 1px solid colors.$base08;
+  background-color: colors.$base0c;
+  color: colors.$base02
+}
+
+.workspace.notactivews {
+  background-color: colors.$base04;
+  color: colors.$base02
+}

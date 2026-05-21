@@ -1,0 +1,140 @@
+(defwidget bar []
+  (centerbox :orientation "h"
+    (workspaces)
+    (music_widget :value {music})
+    (sidestuff)))
+
+(defwidget sidestuff []
+  (box :class "sidestuff" :orientation "h" :space-evenly false :halign "end"
+    (metric :label {volume < 1 ? "" : 
+                    volume <= 30 ? "" : 
+                    volume <= 50 ? "" : ""}
+            :value volume
+            :onchange "scripts/setvol {}"
+            :class "vol")
+    (metric :label ""
+            :value {EWW_RAM.used_mem_perc}
+            :onchange ""
+            :class "ram")
+    (metric :label ""
+            :value {round((1 - (EWW_DISK["/"].free / EWW_DISK["/"].total)) * 100, 0)}
+            :onchange ""
+            :class "dsk")
+    (keyboard_layout
+            :value {layout}
+            :onchange "")
+    (time_widget :value {time})
+    (date_widget :value {day})))
+
+(defwidget workspaces []
+  (box :class "workspaces"
+       :orientation "h"
+       :space-evenly true
+       :halign "start"
+       :spacing 0
+    (workspace  :value "1"
+                :onclick "swaymsg workspace 1")
+
+    (workspace  :value "2"
+                :onclick "swaymsg workspace 2")
+
+    (workspace  :value "3"
+                :onclick "swaymsg workspace 3")
+
+    (workspace  :value "4"
+                :onclick "swaymsg workspace 4")
+
+    (workspace  :value "5"
+                :onclick "swaymsg workspace 5")
+
+    (workspace  :value "6"
+                :onclick "swaymsg workspace 6")
+
+    (workspace  :value "7"
+                :onclick "swaymsg workspace 7")
+
+    (workspace  :value "8"
+                :onclick "swaymsg workspace 8")
+              
+    (workspace  :value "9"
+                :onclick "swaymsg workspace 9")))
+
+(defwidget workspace [value onclick]
+  (button :class {value == activews ? "workspace ws${value} activews" : "workspace ws${value} notactivews"}
+          :onclick {onclick}
+          {value}))
+
+(defwidget music_widget [value]
+  (box :class "music"
+       :orientation "h"
+       :space-evenly false
+       :halign "center"
+    (box :class "label" {value != "" ? "" : ""})
+    (box :class "text" {value != "" ? "${music}" : ""})))
+
+(defwidget metric [label value onchange class]
+  (box :orientation "h"
+       :class "metric ${class}";
+       :space-evenly false
+    (box :class "label" label)
+    (scale :min 0
+           :max 101
+           :active {onchange != ""}
+           :value value
+           :onchange onchange)))
+
+(deflisten music :initial ""
+  "scripts/music")
+
+(deflisten volume :initial "20"
+  "scripts/getvol")
+
+(deflisten activews :initial "1"
+  "scripts/getworkspace")
+
+(deflisten layout :initial "En"
+  "scripts/getlayout")
+
+(defpoll time :interval "1s"
+  "date '+%H:%M:%S'")
+
+(defpoll day :interval "10s"
+  "date '+%d. %m. %Y'")
+
+(defwidget keyboard_layout [value onchange]
+  (box :orientation "h"
+       :class "keyboard_layout text_container";
+       :space-evenly false
+    (box :class "label" "")
+    (box :active {onchange != ""}
+         :class "text"
+         {value})))
+
+(defwidget time_widget [value]
+  (box :orientation "h"
+       :class "time_widget text_container";
+       :space-evenly false
+    (box :class "label" "")
+    (box :class "text"
+         {value})))
+
+(defwidget date_widget [value]
+  (box :orientation "h"
+       :class "date_widget text_container";
+       :space-evenly false
+    (box :class "label" "")
+    (box :class "text"
+         {value})))
+
+(defwindow bar
+  :monitor 0
+  :windowtype "dock"
+  :exclusive true
+  :focusable false
+  :stacking "fg"
+  :geometry (geometry :x "0%"
+                      :y "0%"
+                      :width "100%"
+                      :height "10px"
+                      :anchor "top center")
+  (bar))

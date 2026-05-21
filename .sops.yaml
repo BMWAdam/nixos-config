@@ -1,0 +1,14 @@
+keys:
+  - &me age1yhkr50qevrqyqny6g2m5k3k48xdt06u09tjwt7mh5f4cwg6knvms4edftg
+
+creation_rules:
+  - path_regex: secrets/.*\.yaml$
+    key_groups:
+      - age:
+          - *me
+
+  # fallback rule for manual encryption
+  - path_regex: .*
+    key_groups:
+      - age:
+          - *me

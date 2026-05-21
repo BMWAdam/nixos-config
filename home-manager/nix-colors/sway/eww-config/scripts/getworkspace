@@ -1,0 +1,8 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p jq
+
+# 1. Get the current layout once immediately (so the widget isn't empty on start)
+swaymsg -t get_workspaces | jq -r '.[] | select(.focused==true).name'
+
+# 2. Subscribe to changes
+swaymsg -r -t subscribe -m '["workspace"]' | jq --unbuffered -r 'select(.change == "focus") | .current.name'

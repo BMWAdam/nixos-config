@@ -1,0 +1,55 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p pamixer gawk
+
+if command -v pamixer &>/dev/null; then
+    if [ true == $(pamixer --get-mute) ]; then
+        echo 0
+        exit
+    else
+        pamixer --get-volume
+    fi
+else
+    amixer -D pulse sget Master | awk -F '[^0-9]+' '/Left:/{print $3}'
+fi
+
+if command -v pamixer &>/dev/null; then
+    # Initial volume check
+    last_volume=$(pamixer --get-volume)
+    
+    # Check if muted
+    if [ true == $(pamixer --get-mute) ]; then
+        echo 0
+        exit
+    fi
+
+    # Continuous loop
+    while true; do
+        current_volume=$(pamixer --get-volume)
+        
+        # If volume has changed, print the new volume
+        if [ "$current_volume" -ne "$last_volume" ]; then
+            echo "$current_volume"
+            last_volume="$current_volume"
+        fi
+        
+        # Sleep for a second before checking again
+        sleep 0.2
+    done
+else
+    # If pamixer is not available, fall back to amixer
+    last_volume=$(amixer -D pulse sget Master | awk -F '[^0-9]+' '/Left:/{print $3}')
+    
+    # Continuous loop
+    while true; do
+        current_volume=$(amixer -D pulse sget Master | awk -F '[^0-9]+' '/Left:/{print $3}')
+        
+        # If volume has changed, print the new volume
+        if [ "$current_volume" -ne "$last_volume" ]; then
+            echo "$current_volume"
+            last_volume="$current_volume"
+        fi
+        
+        # Sleep for a second before checking again
+        sleep 0.2
+    done
+fi

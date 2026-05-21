@@ -1,0 +1,13 @@
+#! /usr/bin/env bash
+
+# Check if the number of arguments is correct
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 percent"
+    exit 1
+fi
+
+# Set the volume using pamixer
+pamixer --set-volume $1
+
+# Optional: Notify the user of the change
+echo "Volume set to ${1}%"
