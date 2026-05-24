@@ -22,13 +22,20 @@ in {
     isNormalUser = true;
     home = "/home/bmwadam";
     description = "BMWAdam";
-    extraGroups = [ "wheel" "networkmanager" "video" "input" ];
+    extraGroups = [ "wheel" "networkmanager" "video" "input" "uinput" ];
     shell = pkgs.zsh;
   };
+
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="intel_backlight", \
+      RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/%k/brightness", \
+      RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/backlight/%k/brightness"
+  '';
 
   home-manager = {
     extraSpecialArgs = {
       inherit inputs;
+      firefox-addons = inputs.firefox-addons;
       sshKeyPath = config.sops.secrets.ssh_key.path;
       gitEmailPath = config.sops.secrets.git_email.path;
       gpgKeyPath = config.sops.secrets.gpg_key.path;
@@ -47,13 +54,49 @@ in {
   services.xserver.enable = true;
   services.xserver.displayManager.lightdm = {
     enable = true;
-    greeters.gtk.enable = true;
-    background = pkgs.nixos-artwork.wallpapers.simple-dark-gray-bottom.gnomeFilePath;
+
+    greeters.gtk = {
+      enable = true;
+
+      theme = {
+        name = "Adwaita-dark";
+        package = pkgs.gnome-themes-extra;
+      };
+
+      iconTheme = {
+        name = "Papirus-Dark";
+        package = pkgs.papirus-icon-theme;
+      };
+
+      cursorTheme = {
+        name = "Adwaita";
+        package = pkgs.adwaita-icon-theme;
+        size = 24; # even bigger cursor for ultrabook HiDPI
+      };
+
+      extraConfig = ''
+        icon-theme-name=Papirus-Dark
+        background=${pkgs.nixos-artwork.wallpapers.simple-dark-gray-bottom.gnomeFilePath}
+
+        # Ultra HiDPI scaling
+        xft-dpi=288
+        Gdk/WindowScalingFactor=3
+        gtk-font-name=Sans 20
+      '';
+    };
   };
 
-  programs.sway = {
-    enable = true;
-    wrapperFeatures.gtk = true;
+  #programs.sway = {
+  #  enable = true;
+  #  wrapperFeatures.gtk = true;
+  #  package = pkgs.swayfx;
+  #};
+  programs.hyprland.enable = true;
+  programs.hyprland.package = pkgs.hyprland;
+
+  nix.settings = {
+    substituters = ["https://hyprland.cachix.org"];
+    trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
   };
 
   environment.systemPackages = with pkgs; [
@@ -63,6 +106,11 @@ in {
     mpv
     calibre
     chromium
+    iio-sensor-proxy
+    pamixer
+    nicotine-plus
+    keepassxc
+    mpc
   ];
 
   fonts = {
@@ -87,19 +135,43 @@ in {
 
   services.libinput.mouse.accelSpeed = "-0.5";
 
-  boot.loader.systemd-boot.enable = true;
+  boot.loader.grub = {
+    enable = true;
+    efiSupport = true;
+    device = "nodev";
+  };
+
+  networking.firewall.allowedTCPPorts = [ 2234 2235 ];
+
+  #boot.loader.grub.font = pkgs.runCommand "grub-font.pf2" {} ''
+  #  ${pkgs.grub2}/bin/grub-mkfont \
+  #    --output=$out \
+  #    --size=48 \
+  #    --font=${pkgs.nerd-fonts.lilex}/share/fonts/truetype/Lilex-Regular.ttf
+  #
+  #'';
+  boot.loader.grub.theme = inputs.nixos-grub-themes.packages.${pkgs.system}.nixos;
+
   boot.loader.efi.canTouchEfiVariables = true;
   hardware.uinput.enable = true;
 
   environment.sessionVariables = {
-    NH_FLAKE = "/home/bmwadam/nixos-config";
     EDITOR = "nvim";
+    MOZ_DISABLE_WAYLAND = "1";
   };
 
   programs.gnupg.agent = {
     enable = true;
     enableSSHSupport = true;
     pinentryPackage = pkgs.pinentry-curses;
+  };
+
+  systemd.services.ydotoold = {
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.ydotool}/bin/ydotoold";
+      Group = "uinput";
+    };
   };
 
   # This value determines the NixOS release from which the default

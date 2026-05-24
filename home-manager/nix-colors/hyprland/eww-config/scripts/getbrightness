@@ -1,0 +1,16 @@
+#!/usr/bin/env nix-shell
+#!nix-shell -i bash -p inotify-tools
+
+b="/sys/class/backlight/intel_backlight"
+
+# Print initial value
+cur=$(cat "$b/brightness")
+max=$(cat "$b/max_brightness")
+echo $(( 100 * cur / max ))
+
+# Listen for brightness changes silently
+while inotifywait -qq -e modify "$b/brightness"; do
+    cur=$(cat "$b/brightness")
+    max=$(cat "$b/max_brightness")
+    echo $(( 100 * cur / max ))
+done

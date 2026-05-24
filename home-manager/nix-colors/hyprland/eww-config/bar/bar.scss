@@ -69,6 +69,24 @@
   margin-right: 10px;
 }
 
+.metric.brightness scale trough highlight {
+  background-color: rgba(red(colors.$base0c), green(colors.$base0c), blue(colors.$base0c), 1);
+}
+
+.metric.brightness scale trough {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.metric.battery scale trough highlight {
+  background-color: rgba(red(colors.$base0d), green(colors.$base0d), blue(colors.$base0d), 1);
+}
+
+.metric.battery scale trough {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
 .label-ram {
   font-size: large;
 }

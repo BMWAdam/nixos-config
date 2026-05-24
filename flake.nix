@@ -9,6 +9,7 @@
       nix-colors.url = "github:misterio77/nix-colors";
       flake-utils.url = "github:numtide/flake-utils";
       sops-nix.url = "github:Mic92/sops-nix";
+      nixos-grub-themes.url = "github:jeslie0/nixos-grub-themes";
       firefox-addons =
       {
         url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
@@ -24,6 +25,7 @@
       firefox-addons,
       flake-utils,
       sops-nix,
+      nixos-grub-themes,
       ...
     } @ inputs: let
       inherit (self) outputs;
@@ -40,6 +42,7 @@
 
           modules = [
             inputs.sops-nix.nixosModules.sops
+            ./modules/omnibook/proximity.nix
             ./modules/omnibook/secrets.nix
             ./modules/omnibook/hardware-configuration.nix
             ./modules/configuration.nix

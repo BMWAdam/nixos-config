@@ -2,11 +2,15 @@
 {
   imports = [
     inputs.nix-colors.homeManagerModules.default
-    ./sway/sway.nix
+    ./hyprland/hyprland.nix
     ./applications/firefox/firefox.nix
     ./applications/ncmpcpp.nix
     ./applications/alacritty.nix
+    ./applications/calibre.nix
+    ./applications/neovim.nix
   ];
 
-  colorScheme = inputs.nix-colors.colorSchemes.gruvbox-dark-medium;
+  #colorScheme = inputs.nix-colors.colorSchemes.nord;
+  colorScheme = inputs.nix-colors.colorSchemes.kanagawa;
+  #colorScheme = inputs.nix-colors.colorSchemes.gruvbox-dark-medium;
 }

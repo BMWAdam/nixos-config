@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+b="/sys/class/backlight/intel_backlight"
+max=$(cat "$b/max_brightness")
+pct=$1
+
+# clamp 1–100
+if [ "$pct" -lt 1 ]; then pct=1; fi
+if [ "$pct" -gt 100 ]; then pct=100; fi
+
+val=$(( pct * max / 100 ))
+echo "$val" > "$b/brightness"

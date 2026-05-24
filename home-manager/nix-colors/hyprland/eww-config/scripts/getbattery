@@ -1,0 +1,22 @@
+#!/usr/bin/env nix-shell
+#!nix-shell -i bash -p inotify-tools
+
+# Auto-detect battery (BAT0, BAT1, etc.)
+BAT=$(ls /sys/class/power_supply | grep -m1 BAT)
+
+# If no battery exists, output 100 forever
+if [ -z "$BAT" ]; then
+    echo 100
+    while sleep 5; do echo 100; done
+    exit 0
+fi
+
+cap="/sys/class/power_supply/$BAT/capacity"
+
+# Print initial value
+echo "$(cat "$cap")"
+
+# Listen for battery capacity changes
+while inotifywait -qq -e modify "$cap"; do
+    echo "$(cat "$cap")"
+done

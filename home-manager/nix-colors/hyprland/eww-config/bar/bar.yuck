@@ -20,6 +20,21 @@
             :value {round((1 - (EWW_DISK["/"].free / EWW_DISK["/"].total)) * 100, 0)}
             :onchange ""
             :class "dsk")
+    (metric :label {brightness < 1 ? "󰃞" :
+                brightness <= 30 ? "󰃞" :
+                brightness <= 60 ? "󰃟" : "󰃠"}
+        :value brightness
+        :onchange "scripts/setbrightness {}"
+        :class "brightness")
+    (metric :label {
+              battery <= 10 ? "" :
+              battery <= 30 ? "" :
+              battery <= 60 ? "" :
+              battery <= 90 ? "" : ""
+          }
+          :value battery
+          :onchange ""
+          :class "battery")
     (keyboard_layout
             :value {layout}
             :onchange "")
@@ -33,31 +48,31 @@
        :halign "start"
        :spacing 0
     (workspace  :value "1"
-                :onclick "swaymsg workspace 1")
+                :onclick "hyprctl dispatch workspace 1")
 
     (workspace  :value "2"
-                :onclick "swaymsg workspace 2")
+                :onclick "hyprctl dispatch workspace 2")
 
     (workspace  :value "3"
-                :onclick "swaymsg workspace 3")
+                :onclick "hyprctl dispatch workspace 3")
 
     (workspace  :value "4"
-                :onclick "swaymsg workspace 4")
+                :onclick "hyprctl dispatch workspace 4")
 
     (workspace  :value "5"
-                :onclick "swaymsg workspace 5")
+                :onclick "hyprctl dispatch workspace 5")
 
     (workspace  :value "6"
-                :onclick "swaymsg workspace 6")
+                :onclick "hyprctl dispatch workspace 6")
 
     (workspace  :value "7"
-                :onclick "swaymsg workspace 7")
+                :onclick "hyprctl dispatch workspace 7")
 
     (workspace  :value "8"
-                :onclick "swaymsg workspace 8")
+                :onclick "hyprctl dispatch workspace 8")
               
     (workspace  :value "9"
-                :onclick "swaymsg workspace 9")))
+                :onclick "hyprctl dispatch workspace 9")))
 
 (defwidget workspace [value onclick]
   (button :class {value == activews ? "workspace ws${value} activews" : "workspace ws${value} notactivews"}
@@ -91,6 +106,12 @@
 
 (deflisten activews :initial "1"
   "scripts/getworkspace")
+
+(deflisten brightness :initial "50"
+  "scripts/getbrightness")
+
+(deflisten battery :initial "100"
+  "scripts/getbattery")
 
 (deflisten layout :initial "En"
   "scripts/getlayout")

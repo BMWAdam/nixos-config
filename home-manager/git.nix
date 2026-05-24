@@ -10,7 +10,7 @@
     };
   };
 
-  programs.ssh.matchBlocks = {
+  programs.ssh.settings = {
     "github.com" = {
       hostname = "github.com";
       user = "git";

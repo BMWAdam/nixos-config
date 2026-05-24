@@ -1,0 +1,21 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p jq socat
+
+# 1. Print current workspace immediately
+hyprctl -j monitors \
+  | jq -r '.[] | select(.focused==true).activeWorkspace.name'
+
+# 2. Listen for workspace change events via Hyprland's socket
+socat -u UNIX-CONNECT:"$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock" - | while read -r line; do
+  case "$line" in
+    "workspace>>"*)
+      # Triggered when switching workspaces on the same monitor
+      echo "${line#workspace>>}"
+      ;;
+    "focusedmon>>"*)
+      # Triggered when switching focus to a different monitor
+      # The event format is "monname,workspacename"
+      echo "${line#*,}"
+      ;;
+  esac
+done
