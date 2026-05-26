@@ -6,6 +6,7 @@
 let
   colorsPath = "${config.home.homeDirectory}/.config/eww/_colors.scss";
   mod = "SUPER";
+  wallpaper = toString ../../../wallpapers/planet.jpg;
 in {
   programs.ranger.enable = true;
   programs.fuzzel.enable = true;
@@ -115,7 +116,7 @@ done
 
   home.packages = with pkgs; [
     libnotify
-    hyprlock # Added hyprlock to packages
+    hyprlock
   ];
 
   systemd.user.services.proximity-watcher = {
@@ -136,7 +137,6 @@ done
     };
   };
 
-  # Updated for Hyprlock
   home.file.".config/lock-safe.sh" = {
     executable = true;
     text = ''
@@ -165,7 +165,7 @@ fi
   };
 
   # -----------------------------------------------------------
-  # HYPRIDLE CONFIGURATION (Replaced Swayidle)
+  # HYPRIDLE CONFIGURATION
   # -----------------------------------------------------------
   services.hypridle = {
     enable = true;
@@ -192,15 +192,17 @@ fi
 
   wayland.windowManager.hyprland = {
     enable = true;
-    systemd.enable = true; # Recommended to properly expose WAYLAND_DISPLAY to systemd units like hypridle
+    systemd.enable = true;
     package = pkgs.hyprland;
-    
+
     settings = {
-      monitor = ",preferred,auto,2";
+      monitor = "eDP-1,2880x1800@120,auto,2,vrr,1";
+
       exec-once = [
         "eww open bar"
         "hyprctl dispatch workspace 1"
-        #"swaync --reload &"
+        "sleep 1 && hyprctl hyprpaper preload ${wallpaper}"
+        "sleep 3 && hyprctl hyprpaper wallpaper ',${wallpaper}'"
       ];
 
       env = [
@@ -217,6 +219,7 @@ fi
         touchpad = {
           disable_while_typing = true;
           natural_scroll = true;
+          drag_lock = true;
         };
       };
 
@@ -228,13 +231,8 @@ fi
         workspace_swipe_forever = true;
 
         gesture = [
-          # 3‑finger horizontal → switch workspace
           "4, horizontal, workspace"
-
-          # 4‑finger down + ALT → close window
           "4, down, close"
-
-          # 4‑finger up  → fullscreen
           "4, up, fullscreen"
         ];
       };
@@ -243,7 +241,7 @@ fi
         gaps_in = 10;
         gaps_out = 10;
         border_size = 2;
-        
+
         "col.active_border" = "rgb(${config.colorScheme.palette.base0D})";
         "col.inactive_border" = "rgb(${config.colorScheme.palette.base01})";
         layout = "dwindle";
@@ -256,7 +254,7 @@ fi
 
       decoration = {
         rounding = 15;
-        
+
         blur = {
           enabled = true;
           size = 4;
@@ -264,21 +262,21 @@ fi
           xray = false;
           ignore_opacity = true;
         };
-        
+
         dim_inactive = true;
         dim_strength = 0.15;
       };
 
       animations = {
         enabled = true;
-        
+
         bezier = [
           "wind, 0.05, 0.9, 0.1, 1.05"
           "winIn, 0.1, 1.1, 0.1, 1.1"
           "winOut, 0.3, -0.3, 0, 1"
           "liner, 1, 1, 1, 1"
         ];
-        
+
         animation = [
           "windows, 1, 6, wind, slide"
           "windowsIn, 1, 6, winIn, slide"
@@ -289,6 +287,13 @@ fi
           "fade, 1, 10, default"
           "workspaces, 1, 5, wind"
         ];
+      };
+
+      misc = {
+        vrr = 1;
+
+        force_default_wallpaper = 0;
+        disable_hyprland_logo = true;
       };
 
       layerrule = [
@@ -310,7 +315,6 @@ fi
         "${mod}, up, movefocus, u"
         "${mod}, down, movefocus, d"
 
-        # Vim-style focus movement (h, j, k, l)
         "${mod}, h, movefocus, l"
         "${mod}, j, movefocus, d"
         "${mod}, k, movefocus, u"
@@ -324,10 +328,8 @@ fi
         "${mod}, return, exec, alacritty"
         "${mod}, p, exec, wofi --show drun --allow-images --lines 7 --prompt \"Run:\""
       ] ++ (
-        # 1) Switch to workspace 1 to 9 (Super + 1-9)
         map (n: "${mod}, ${toString n}, workspace, ${toString n}") (builtins.genList (x: x + 1) 9)
       ) ++ (
-        # 2) Move application to workspace 1 to 9 (Super + Shift + 1-9)
         map (n: "${mod} SHIFT, ${toString n}, movetoworkspace, ${toString n}") (builtins.genList (x: x + 1) 9)
       );
     };
@@ -390,7 +392,7 @@ fi
   };
 
   # -----------------------------------------------------------
-  # HYPRLOCK CONFIGURATION (Replaces Swaylock)
+  # HYPRLOCK CONFIGURATION
   # -----------------------------------------------------------
   home.file.".config/hypr/hyprlock.conf".text = ''
     background {
@@ -446,12 +448,11 @@ fi
   home.file.".config/swaync/widgets/title".text = ''
     visible=true
   '';
-  
+
   home.file.".config/swaync/widgets/dnd".text = ''
     visible=true
   '';
 
-  # Generate swaync CSS using nix-colors
   home.file.".config/swaync/style.css".text = ''
     @define-color base00 #${config.colorScheme.palette.base00};
     @define-color base01 #${config.colorScheme.palette.base01};
@@ -470,7 +471,6 @@ fi
     @define-color base0E #${config.colorScheme.palette.base0E};
     @define-color base0F #${config.colorScheme.palette.base0F};
 
-    /* Notification popup */
     .notification {
       background-color: @base00;
       border: 1px solid @base02;
@@ -479,18 +479,15 @@ fi
       padding: 10px;
     }
 
-    /* Title */
     .notification-title {
       color: @base0D;
       font-weight: bold;
     }
 
-    /* Body text */
     .notification-body {
       color: @base05;
     }
 
-    /* Buttons */
     button {
       background-color: @base02;
       color: @base05;
@@ -517,6 +514,15 @@ fi
 
     Install = {
       WantedBy = [ "graphical-session.target" ];
+    };
+  };
+
+  services.hyprpaper = {
+    enable = false;
+    settings = {
+      preload = [ wallpaper ];
+      wallpaper = [ ",${wallpaper}" ];
+      splash = false;
     };
   };
 }

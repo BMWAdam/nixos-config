@@ -45,6 +45,7 @@ in
     bc
     swaynotificationcenter
     pythonEvdev
+    hyprpaper
   ];
 
 
@@ -61,9 +62,9 @@ in
       from evdev import InputDevice, ecodes, list_devices
 
       DEVICE_KEYWORD = "Touchpad"
-      CYCLE_DELAY = 0.18
-      MIN_SAMPLES = 8
-      MAGNITUDE_THRESHOLD = 0.015
+      CYCLE_DELAY = 0.23
+      MIN_SAMPLES = 12
+      MAGNITUDE_THRESHOLD = 0.022
 
       FINGER_CODES = {
           ecodes.BTN_TOOL_FINGER: 1,

@@ -6,8 +6,7 @@
   pkgs,
   ...
 }:
-let
-in {
+{
   imports = [
     inputs.home-manager.nixosModules.default
   ];
@@ -22,7 +21,7 @@ in {
     isNormalUser = true;
     home = "/home/bmwadam";
     description = "BMWAdam";
-    extraGroups = [ "wheel" "networkmanager" "video" "input" "uinput" ];
+    extraGroups = [ "wheel" "networkmanager" "video" "input" "uinput" "render" ];
     shell = pkgs.zsh;
   };
 
@@ -71,7 +70,7 @@ in {
       cursorTheme = {
         name = "Adwaita";
         package = pkgs.adwaita-icon-theme;
-        size = 24; # even bigger cursor for ultrabook HiDPI
+        size = 24;
       };
 
       extraConfig = ''
@@ -86,17 +85,12 @@ in {
     };
   };
 
-  #programs.sway = {
-  #  enable = true;
-  #  wrapperFeatures.gtk = true;
-  #  package = pkgs.swayfx;
-  #};
   programs.hyprland.enable = true;
   programs.hyprland.package = pkgs.hyprland;
 
   nix.settings = {
-    substituters = ["https://hyprland.cachix.org"];
-    trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
+    substituters = [ "https://hyprland.cachix.org" ];
+    trusted-public-keys = [ "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" ];
   };
 
   environment.systemPackages = with pkgs; [
@@ -111,6 +105,10 @@ in {
     nicotine-plus
     keepassxc
     mpc
+    ocl-icd
+    opencl-headers
+    opencl-clhpp
+    onetbb
   ];
 
   fonts = {
@@ -143,13 +141,6 @@ in {
 
   networking.firewall.allowedTCPPorts = [ 2234 2235 ];
 
-  #boot.loader.grub.font = pkgs.runCommand "grub-font.pf2" {} ''
-  #  ${pkgs.grub2}/bin/grub-mkfont \
-  #    --output=$out \
-  #    --size=48 \
-  #    --font=${pkgs.nerd-fonts.lilex}/share/fonts/truetype/Lilex-Regular.ttf
-  #
-  #'';
   boot.loader.grub.theme = inputs.nixos-grub-themes.packages.${pkgs.system}.nixos;
 
   boot.loader.efi.canTouchEfiVariables = true;
@@ -158,6 +149,9 @@ in {
   environment.sessionVariables = {
     EDITOR = "nvim";
     MOZ_DISABLE_WAYLAND = "1";
+
+    # Tell the OpenVINO backend to target the NPU.
+    GGML_OPENVINO_DEVICE = "NPU";
   };
 
   programs.gnupg.agent = {
@@ -174,11 +168,5 @@ in {
     };
   };
 
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "25.11"; # Did you read the comment?
+  system.stateVersion = "25.11";
 }

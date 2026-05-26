@@ -1,0 +1,4 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p playerctl mpc
+
+playerctl metadata title 2>/dev/null || mpc current
