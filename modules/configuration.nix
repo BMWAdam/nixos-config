@@ -109,6 +109,7 @@
     opencl-headers
     opencl-clhpp
     onetbb
+    ollama
   ];
 
   fonts = {

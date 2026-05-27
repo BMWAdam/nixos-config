@@ -3,7 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.11";
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     xremap-flake.url = "github:xremap/nix-flake";
@@ -11,11 +10,6 @@
     flake-utils.url = "github:numtide/flake-utils";
     sops-nix.url = "github:Mic92/sops-nix";
     nixos-grub-themes.url = "github:jeslie0/nixos-grub-themes";
-
-    llama-cpp-src = {
-      url = "github:ggerganov/llama.cpp";
-      flake = false;
-    };
 
     firefox-addons = {
       url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
@@ -32,8 +26,6 @@
     flake-utils,
     sops-nix,
     nixos-grub-themes,
-    llama-cpp-src,
-    nixpkgs-stable,
     ...
   } @ inputs: let
     inherit (self) outputs;

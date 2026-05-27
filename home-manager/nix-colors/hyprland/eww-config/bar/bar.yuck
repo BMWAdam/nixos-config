@@ -6,17 +6,18 @@
 
 (defwidget sidestuff []
   (box :class "sidestuff" :orientation "h" :space-evenly false :halign "end"
-    (metric :label {volume < 1 ? "" : 
-                    volume <= 30 ? "" : 
-                    volume <= 50 ? "" : ""}
+    (metric :label {volume < 1 ? ""  : 
+                    volume < 15 ? "" :
+                    volume <= 30 ? "" : 
+                    volume <= 50 ? "󰕾" : ""}
             :value volume
             :onchange "scripts/setvol {}"
             :class "vol")
-    (metric :label ""
+    (metric :label " "
             :value {EWW_RAM.used_mem_perc}
             :onchange ""
             :class "ram")
-    (metric :label ""
+    (metric :label ""
             :value {round((1 - (EWW_DISK["/"].free / EWW_DISK["/"].total)) * 100, 0)}
             :onchange ""
             :class "dsk")
@@ -27,10 +28,10 @@
         :onchange "scripts/setbrightness {}"
         :class "brightness")
     (metric :label {
-              battery <= 10 ? "" :
-              battery <= 30 ? "" :
+              battery <= 20 ? "" :
+              battery <= 40 ? "" :
               battery <= 60 ? "" :
-              battery <= 90 ? "" : ""
+              battery <= 80 ? "" : ""
           }
           :value battery
           :onchange ""
@@ -46,50 +47,46 @@
        :orientation "h"
        :space-evenly true
        :halign "start"
-       :spacing 0
-    (workspace  :value "1"
-                :onclick "hyprctl dispatch workspace 1")
-
-    (workspace  :value "2"
-                :onclick "hyprctl dispatch workspace 2")
-
-    (workspace  :value "3"
-                :onclick "hyprctl dispatch workspace 3")
-
-    (workspace  :value "4"
-                :onclick "hyprctl dispatch workspace 4")
-
-    (workspace  :value "5"
-                :onclick "hyprctl dispatch workspace 5")
-
-    (workspace  :value "6"
-                :onclick "hyprctl dispatch workspace 6")
-
-    (workspace  :value "7"
-                :onclick "hyprctl dispatch workspace 7")
-
-    (workspace  :value "8"
-                :onclick "hyprctl dispatch workspace 8")
-              
-    (workspace  :value "9"
-                :onclick "hyprctl dispatch workspace 9")))
+       :valign "center"
+       :vexpand false
+       :spacing 5
+    (workspace  :value "1" :onclick "hyprctl dispatch workspace 1")
+    (workspace  :value "2" :onclick "hyprctl dispatch workspace 2")
+    (workspace  :value "3" :onclick "hyprctl dispatch workspace 3")
+    (workspace  :value "4" :onclick "hyprctl dispatch workspace 4")
+    (workspace  :value "5" :onclick "hyprctl dispatch workspace 5")
+    (workspace  :value "6" :onclick "hyprctl dispatch workspace 6")
+    (workspace  :value "7" :onclick "hyprctl dispatch workspace 7")
+    (workspace  :value "8" :onclick "hyprctl dispatch workspace 8")
+    (workspace  :value "9" :onclick "hyprctl dispatch workspace 9")))
 
 (defwidget workspace [value onclick]
+  (box :valign "center"
+       :halign "center"
+       :vexpand false
+       :hexpand false
+       :width 5
+       :height 5
   (button :class {value == activews ? "workspace ws${value} activews" : "workspace ws${value} notactivews"}
           :onclick {onclick}
-          {value}))
+          :valign "center"
+          :halign "center"
+          :width 5
+          :vexpand false
+          "")))
 
 (defwidget music_widget [value]
   (box :class "music"
        :orientation "h"
        :space-evenly false
        :halign "center"
-    (box :class "label" {value != "" ? "" : ""})
-    (box :class "text" {value != "" ? "${music}" : ""})))
+    (button :class "music-text"
+        :onclick "eww open-many --toggle music-widget"
+      {value == "" ? "" : value})))
 
 (defwidget metric [label value onchange class]
   (box :orientation "h"
-       :class "metric ${class}";
+       :class "metric ${class}"
        :space-evenly false
     (box :class "label" label)
     (scale :min 0
@@ -110,7 +107,7 @@
 (deflisten brightness :initial "50"
   "scripts/getbrightness")
 
-(deflisten battery :initial "100"
+(defpoll battery :interval "1s"
   "scripts/getbattery")
 
 (deflisten layout :initial "En"
@@ -124,28 +121,26 @@
 
 (defwidget keyboard_layout [value onchange]
   (box :orientation "h"
-       :class "keyboard_layout text_container";
+       :class "keyboard_layout text_container"
        :space-evenly false
-    (box :class "label" "")
+    (box :class "label" "󰌌 ")
     (box :active {onchange != ""}
          :class "text"
          {value})))
 
 (defwidget time_widget [value]
   (box :orientation "h"
-       :class "time_widget text_container";
+       :class "time_widget text_container"
        :space-evenly false
-    (box :class "label" "")
-    (box :class "text"
-         {value})))
+    (box :class "label" " ")
+    (box :class "text" {value})))
 
 (defwidget date_widget [value]
   (box :orientation "h"
-       :class "date_widget text_container";
+       :class "date_widget text_container"
        :space-evenly false
-    (box :class "label" "")
-    (box :class "text"
-         {value})))
+    (box :class "label" "󰃭 ")
+    (box :class "text" {value})))
 
 (defwindow bar
   :monitor 0

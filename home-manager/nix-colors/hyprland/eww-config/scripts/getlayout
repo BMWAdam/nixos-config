@@ -1,15 +1,19 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p jq
+#! nix-shell -i bash -p jq socat
 
-# 1. Get the current layout once immediately (so the widget isn't empty on start)
-swaymsg -r -t get_inputs | jq -r '.[] | select(.type == "keyboard") | .xkb_active_layout_name | .[0:2]' | head -n 1
+last_layout=$(hyprctl devices -j | jq -r '.keyboards[] | select(.main == true) | .active_keymap | .[0:2]' | head -n 1)
+echo "$last_layout"
 
-# 2. Subscribe to changes and filter duplicates
-swaymsg -r -t subscribe -m '["input"]' | \
-jq --unbuffered -r '.input.xkb_active_layout_name | .[0:2]' | \
-while read -r layout; do
-    if [ "$layout" != "$last_layout" ]; then
-        echo "$layout"
-        last_layout="$layout"
+socat -U - UNIX-CONNECT:"$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock" | while read -r line; do
+    
+    if [[ "$line" == "activelayout>>"* ]]; then
+        
+        full_layout="${line#*,}"
+        short_layout="${full_layout:0:2}"
+        
+        if [[ "$short_layout" != "$last_layout" ]]; then
+            echo "$short_layout"
+            last_layout="$short_layout"
+        fi
     fi
 done

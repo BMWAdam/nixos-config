@@ -1,0 +1,91 @@
+;; --- Listeners & Polls ---
+(deflisten song_title :initial "No Music Playing"
+  "while true; do playerctl metadata --format '{{title}}' --follow 2>/dev/null | stdbuf -oL python3 $HOME/.config/eww/music-widget/scroll.py 22 0.3; echo 'No Music Playing'; sleep 1; done")
+
+(deflisten song_artist :initial "Unknown Artist"
+  "while true; do playerctl metadata --format '{{artist}}' --follow 2>/dev/null | stdbuf -oL python3 $HOME/.config/eww/music-widget/scroll.py 25 0.3; echo 'Unknown Artist'; sleep 1; done")
+
+(deflisten player_status :initial "Stopped"
+  "while true; do playerctl status --follow 2>/dev/null || echo 'Stopped'; sleep 1; done")
+
+(defpoll song_length_s :interval "2s"
+  "playerctl metadata mpris:length | awk '{print $1 / 1000000}' || echo 1")
+
+(defpoll song_position_s :interval "1s"
+  "playerctl position || echo 0")
+
+(defpoll formatted_position :interval "1s"
+  "playerctl position -f '{{duration(position)}}' || echo '0:00'")
+
+(defpoll cover_art_path :interval "1s"
+  "$HOME/.config/eww/music-widget/get-cover.sh")
+
+(defpoll volume_percent :interval "2s"
+  "$HOME/.config/eww/music-widget/volumecontroller.sh get")
+
+(defpoll volume_mute :interval "2s"
+  "pamixer --get-mute")
+
+(deflisten cava :initial ""
+  "bash $HOME/.config/eww/music-widget/cava.sh")
+
+;; --- Widget Definition ---
+(defwidget music-widget []
+  (box :class "music-widget"
+       :orientation "h"
+       :space-evenly false
+
+    ;; Left: Cover Art
+    (box :class "cover-art"
+         :style "background-image: url('${cover_art_path}');")
+
+    ;; Middle: Info & Controls
+    (box :class "music-info"
+         :orientation "v"
+         :space-evenly false
+         :valign "center"
+
+      (label :class "song-title" :text song_title :halign "start")
+      (label :class "artist"     :text song_artist :halign "start")
+
+      (box :class "progress-container"
+           :orientation "v"
+           :space-evenly false
+        (label :class "position" :text formatted_position :halign "start")
+        (scale :class "progress-bar"
+               :min 0
+               :max song_length_s
+               :value song_position_s
+               :onchange "playerctl position {}")
+      )
+
+      (box :class "controls"
+           :orientation "h"
+           :space-evenly false
+           :halign "center"
+           :spacing 15
+        (button :onclick "playerctl previous 2>/dev/null || playerctl --player=$(playerctl -l | head -1) previous 2>/dev/null"  :tooltip "Previous" "󰒮")
+        (button :onclick "playerctl play-pause 2>/dev/null || playerctl --player=$(playerctl -l | head -1) play 2>/dev/null"
+                :tooltip "Play/Pause"
+                :class "play-btn"
+                {player_status == "Playing" ? "󰏤" : "󰐊"})
+        (button :onclick "playerctl next 2>/dev/null || playerctl --player=$(playerctl -l | head -1) next 2>/dev/null"      :tooltip "Next"     "󰒭")
+      )
+
+      (box :class "visualizer-container" :halign "start"
+        (label :class "cava-visualizer" :text cava)
+      )
+    )
+  )
+)
+
+;; --- Window Definition ---
+(defwindow music-widget
+  :monitor 0
+  :geometry (geometry
+    :x "20px"
+    :y "20px"
+    :width "390px"
+    :height "160px")
+  :wm-ignore true
+  (music-widget))

@@ -1,1 +1,2 @@
 (include "bar/bar.yuck")
+(include "./music-widget/eww.yuck")

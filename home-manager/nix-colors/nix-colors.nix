@@ -11,6 +11,6 @@
   ];
 
   #colorScheme = inputs.nix-colors.colorSchemes.nord;
-  colorScheme = inputs.nix-colors.colorSchemes.kanagawa;
-  #colorScheme = inputs.nix-colors.colorSchemes.gruvbox-dark-medium;
+  #colorScheme = inputs.nix-colors.colorSchemes.kanagawa;
+  colorScheme = inputs.nix-colors.colorSchemes.gruvbox-dark-medium;
 }

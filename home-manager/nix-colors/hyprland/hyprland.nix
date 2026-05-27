@@ -7,6 +7,68 @@ let
   colorsPath = "${config.home.homeDirectory}/.config/eww/_colors.scss";
   mod = "SUPER";
   wallpaper = toString ../../../wallpapers/planet.jpg;
+  abstractWallpaper = pkgs.runCommand "abstract-wallpaper.jpg" {
+    # Added imagemagick to the build inputs
+    buildInputs = [ pkgs.python3 pkgs.imagemagick ];
+  } ''
+    cat << 'EOF' > generate.py
+    import random
+
+    # Seed the random generator with the theme colors so it's deterministic for Nix,
+    # but generates a totally unique layout whenever you change themes!
+    random.seed("${config.colorScheme.palette.base00}${config.colorScheme.palette.base05}")
+
+    width, height = 736, 736
+    colors = [
+        "#${config.colorScheme.palette.base01}", "#${config.colorScheme.palette.base02}", "#${config.colorScheme.palette.base03}",
+        "#${config.colorScheme.palette.base04}", "#${config.colorScheme.palette.base05}", "#${config.colorScheme.palette.base06}",
+        "#${config.colorScheme.palette.base07}", "#${config.colorScheme.palette.base08}", "#${config.colorScheme.palette.base09}",
+        "#${config.colorScheme.palette.base0A}", "#${config.colorScheme.palette.base0B}", "#${config.colorScheme.palette.base0C}",
+        "#${config.colorScheme.palette.base0D}", "#${config.colorScheme.palette.base0E}", "#${config.colorScheme.palette.base0F}"
+    ]
+
+    # Start SVG with base00 as the background
+    svg = f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg" style="background-color:#${config.colorScheme.palette.base00}">'
+
+    # Generate 60 abstract geometric shapes with varying opacities
+    for _ in range(60):
+        shape_type = random.choice(["circle", "rect", "polygon"])
+        color = random.choice(colors)
+        opacity = random.uniform(0.1, 0.5) # Blends shapes nicely
+
+        if shape_type == "circle":
+            cx = random.randint(0, width)
+            cy = random.randint(0, height)
+            r = random.randint(50, 400)
+            svg += f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{color}" fill-opacity="{opacity}" />'
+
+        elif shape_type == "rect":
+            x = random.randint(0, width)
+            y = random.randint(0, height)
+            w = random.randint(100, 600)
+            h = random.randint(100, 600)
+            # Optional: add a slight rotation for abstract flavor
+            transform = f'transform="rotate({random.randint(0, 90)} {x} {y})"'
+            svg += f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{color}" fill-opacity="{opacity}" {transform} />'
+
+        elif shape_type == "polygon":
+            # Generates a random abstract triangle
+            points = " ".join(f"{random.randint(0, width)},{random.randint(0, height)}" for _ in range(3))
+            svg += f'<polygon points="{points}" fill="{color}" fill-opacity="{opacity}" />'
+
+    svg += '</svg>'
+
+    # Write to a local temporary file name
+    with open("abstract.svg", "w") as f:
+        f.write(svg)
+    EOF
+
+    # Run the script to generate the SVG
+    python3 generate.py
+    
+    # Use ImageMagick to convert the SVG to a JPG and write it directly to the Nix output
+    magick abstract.svg $out
+  '';
 in {
   programs.ranger.enable = true;
   programs.fuzzel.enable = true;
@@ -23,10 +85,21 @@ in {
     recursive = true;
   };
 
+  home.file.".config/eww/music-widget" = {
+    source = ./eww-config/music-widget;
+    recursive = true;
+  };
+
   home.file.".config/eww/bar/bar.scss".text = ''
     @use "${colorsPath}" as colors;
     ${builtins.readFile ./eww-config/bar/bar.scss}
   '';
+  
+  home.file.".config/eww/music-widget/eww.scss".text = ''
+    @use "${colorsPath}" as colors;
+    ${builtins.readFile ./eww-config/music-widget/base.eww.scss}
+  '';
+
 
   home.file.".config/proximity-listener.sh" = {
     executable = true;
@@ -292,8 +365,8 @@ fi
       misc = {
         vrr = 1;
 
-        force_default_wallpaper = 0;
-        disable_hyprland_logo = true;
+        #force_default_wallpaper = 0;
+        #disable_hyprland_logo = true;
       };
 
       layerrule = [
@@ -453,6 +526,8 @@ fi
     visible=true
   '';
 
+  home.file.".config/eww/music-widget/assets/default.jpg".source = abstractWallpaper;
+
   home.file.".config/swaync/style.css".text = ''
     @define-color base00 #${config.colorScheme.palette.base00};
     @define-color base01 #${config.colorScheme.palette.base01};
@@ -518,11 +593,23 @@ fi
   };
 
   services.hyprpaper = {
-    enable = false;
+    enable = true;
     settings = {
-      preload = [ wallpaper ];
-      wallpaper = [ ",${wallpaper}" ];
-      splash = false;
+      preload = [
+        "${wallpaper}"
+      ];
+      wallpaper = [
+        # By display
+        # {
+        #   monitor = "DP-2";
+        #   path = "~/wallpapers/wallpaper2.jpg";
+        # }
+        # By default/fallback
+        {
+          monitor = "";
+          path = "${wallpaper}"; 
+        }
+      ];
     };
   };
 }

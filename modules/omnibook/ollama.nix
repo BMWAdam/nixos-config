@@ -1,20 +1,18 @@
 { pkgs, config, ... }:
-
-let
-  llama3_2_3b_q4 = pkgs.fetchurl {
-    url = "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf";
-    # Re-run `nix-prefetch-url <url>` to get the real sha256 for this file.
-    sha256 = "sha256-bBorQRYQMmd74WjTVBI1lMDm5n0rkifITylq0DfHKP8=";
+let 
+  weak_qwen = pkgs.fetchurl {
+    url = "https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF/resolve/main/Qwen3.5-0.8B-Q8_0.gguf";
+    sha256 = "sha256-CtiF/9S7Ai/E8NM6Mwj6EI74YTFZ07OmfiOrygVremw=";
   };
 
-  phi3_mini_q4 = pkgs.fetchurl {
-    url = "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf";
-    sha256 = "sha256-ioPH+5BJqbLpImb6etBJM7tTqh6FE2t7MPG4AA/y7e8=";
+  strong_qwen = pkgs.fetchurl {
+    url = "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-Q5_K_M.gguf";
+    sha256 = "sha256-3Co5rvKR+RqRFq0hQFjaDYbrZIdDoSS9jDM3h8S5yRw=";
   };
 in
 {
-  environment.etc."models/phi3-mini.gguf".source = phi3_mini_q4;
-  environment.etc."models/llama-3.2-3b-q4.gguf".source = llama3_2_3b_q4;
+  environment.etc."models/qwen3.5_0.8B.gguf".source = weak_qwen;
+  environment.etc."models/qwen3.5_9B.gguf".source = strong_qwen;
 
   hardware.enableRedistributableFirmware = true;
   hardware.graphics = {
@@ -27,4 +25,34 @@ in
   };
 
   hardware.cpu.intel.npu.enable = true;
+
+  # --- BACKEND 1: Llama-cpp (For Speculative Decoding & WebUI) ---
+  services.llama-cpp = {
+    enable = true;
+    package = pkgs.llama-cpp.override { vulkanSupport = true; };
+    model = "/etc/models/qwen3.5_9B.gguf";
+    extraFlags = [
+      "--model-draft" "/etc/models/qwen3.5_0.8B.gguf"
+      "-ngl" "99"
+
+      "--ctx-size" "4096"        # Limits the RAM allocated for text memory
+      "--batch-size" "256"       # Lowers the processing chunk size to save RAM
+      "--no-mmap"                # Forces it to release unused file memory
+    ];
+  };
+
+  services.open-webui = {
+    enable = true;
+    environment = {
+      OPENAI_API_BASE_URL = "http://127.0.0.1:8080/v1";
+      OPENAI_API_KEY = "sk-dummykey"; 
+    };
+  };
+
+  services.ollama = {
+    enable = true;
+    loadModels = [ "llama3.2:3b" ]; 
+    package = pkgs.ollama-vulkan;
+    syncModels = true;
+  };
 }

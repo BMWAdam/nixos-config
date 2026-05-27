@@ -46,6 +46,10 @@ in
     swaynotificationcenter
     pythonEvdev
     hyprpaper
+    playerctl
+    pamixer
+    cava
+    curl
   ];
 
 
@@ -212,5 +216,6 @@ in
   };
 
   systemd.user.startServices = "sd-switch";
+
   home.stateVersion = "25.11";
 }

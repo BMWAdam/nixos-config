@@ -62,6 +62,8 @@ in {
         # Disable crash reports
         "browser.tabs.crashReporting.sendReport" = false;
         "breakpad.reportURL" = "";
+
+        "alerts.useSystemBackend" = true;
       };
 
       userChrome = ''
