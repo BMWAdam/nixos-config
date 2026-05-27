@@ -45,6 +45,7 @@
           ./modules/omnibook/proximity.nix
           ./modules/omnibook/secrets.nix
           ./modules/omnibook/ollama.nix
+          ./modules/omnibook/fingerprint.nix
           ./modules/omnibook/hardware-configuration.nix
           ./modules/configuration.nix
           ./modules/wifi.nix

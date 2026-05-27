@@ -110,6 +110,8 @@
     opencl-clhpp
     onetbb
     ollama
+    fprintd
+    lxqt.lxqt-policykit
   ];
 
   fonts = {

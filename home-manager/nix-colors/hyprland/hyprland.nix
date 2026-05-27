@@ -273,6 +273,7 @@ fi
 
       exec-once = [
         "eww open bar"
+        "lxqt-policykit-agent &"
         "hyprctl dispatch workspace 1"
         "sleep 1 && hyprctl hyprpaper preload ${wallpaper}"
         "sleep 3 && hyprctl hyprpaper wallpaper ',${wallpaper}'"
@@ -337,7 +338,10 @@ fi
         };
 
         dim_inactive = true;
-        dim_strength = 0.15;
+        dim_strength = 0.05;
+
+        active_opacity = 1.0;
+        inactive_opacity = 0.75;
       };
 
       animations = {
