@@ -7,6 +7,17 @@ let
   colorsPath = "${config.home.homeDirectory}/.config/eww/_colors.scss";
   mod = "SUPER";
   wallpaper = toString ../../../wallpapers/planet.jpg;
+
+  recoloredWallpaper = pkgs.runCommand "theme-wallpaper.jpg" {
+    nativeBuildInputs = [ pkgs.imagemagick ];
+  } ''
+    # The +level-colors flag maps black to black, and white to your hex color.
+    # Gray pixels (like anti-aliased edges or dim stars) will be tinted beautifully.
+    magick ${../../../wallpapers/planet.jpg} +level-colors "black,#${config.colorScheme.palette.base0D}" $out
+  '';
+
+  recoloredWallpaperPath = toString recoloredWallpaper;
+
   abstractWallpaper = pkgs.runCommand "abstract-wallpaper.jpg" {
     # Added imagemagick to the build inputs
     buildInputs = [ pkgs.python3 pkgs.imagemagick ];
@@ -101,69 +112,6 @@ in {
   '';
 
 
-  home.file.".config/proximity-listener.sh" = {
-    executable = true;
-    text = ''
-#!/usr/bin/env bash
-
-SENSOR="/sys/bus/iio/devices/iio:device0/in_proximity1_raw"
-THRESHOLD=720
-LOCKER="$HOME/.config/lock-safe.sh"
-
-WINDOW_SIZE=20
-MIN_PRESENT_COUNT=4
-SLEEP_INTERVAL=0.5
-
-declare -a history
-for ((i=0; i<WINDOW_SIZE; i++)); do
-    history[i]=0
-done
-
-index=0
-filled=0
-
-while true; do
-    if [ ! -f "$SENSOR" ]; then
-        sleep 5
-        continue
-    fi
-
-    value=$(cat "$SENSOR")
-
-    if [ "$value" -le "$THRESHOLD" ]; then
-        present=1
-    else
-        present=0
-    fi
-
-    history[index]=$present
-    index=$(( (index + 1) % WINDOW_SIZE ))
-
-    if [ "$filled" -lt "$WINDOW_SIZE" ]; then
-        filled=$((filled + 1))
-    fi
-
-    present_count=0
-    for ((i=0; i<filled; i++)); do
-        present_count=$((present_count + history[i]))
-    done
-
-    if [ "$filled" -eq "$WINDOW_SIZE" ]; then
-        if [ "$present_count" -le "$MIN_PRESENT_COUNT" ]; then
-            "$LOCKER"
-            for ((i=0; i<WINDOW_SIZE; i++)); do
-                history[i]=0
-            done
-            index=0
-            filled=0
-        fi
-    fi
-
-    sleep "$SLEEP_INTERVAL"
-done
-    '';
-  };
-
   home.file.".config/eww/_colors.scss" = {
     text = ''
       $base00: #${config.colorScheme.palette.base00};
@@ -192,24 +140,6 @@ done
     hyprlock
   ];
 
-  systemd.user.services.proximity-watcher = {
-    Unit = {
-      Description = "Proximity sensor watcher for Hyprland";
-      After = [ "graphical-session.target" ];
-      PartOf = [ "graphical-session.target" ];
-    };
-    Service = {
-      ExecStart = "${config.home.homeDirectory}/.config/proximity-listener.sh";
-      Restart = "always";
-      Environment = ''
-        PATH=${config.home.profileDirectory}/bin:/run/current-system/sw/bin:/run/current-system/sw/sbin
-      '';
-    };
-    Install = {
-      WantedBy = [ "hyprland-session.target" ];
-    };
-  };
-
   home.file.".config/lock-safe.sh" = {
     executable = true;
     text = ''
@@ -237,6 +167,41 @@ fi
     '';
   };
 
+  home.file.".config/hypr/handle-rotation.sh" = {
+    text = ''
+      #! /usr/bin/env nix-shell
+      #! nix-shell -i bash -p jq iio-sensor-proxy
+
+      set_initial_state() {
+          ROT=$(hyprctl monitors -j | jq -r '.[] | select(.name == "eDP-1") | .transform')
+          if [ "$ROT" = "1" ] || [ "$ROT" = "3" ]; then
+              eww open dock 2>/dev/null
+          else
+              eww close dock 2>/dev/null
+          fi
+      }
+
+      set_initial_state
+
+      monitor-sensor | while read -r line; do
+          if [[ "$line" == *"Accelerometer orientation changed:"* ]]; then
+              
+              ORIENTATION=$(echo "$line" | awk -F': ' '{print $2}')
+              
+              if [[ "$ORIENTATION" == "right-up" || "$ORIENTATION" == "left-up" ]]; then
+                  echo "opening dock..."
+                  eww open dock 2>/dev/null
+              elif [[ "$ORIENTATION" == "normal" || "$ORIENTATION" == "bottom-up" ]]; then
+                  echo "closing dock"
+                  eww close dock 2>/dev/null
+              fi
+              
+          fi
+      done
+    '';
+    executable = true;
+  };
+
   # -----------------------------------------------------------
   # HYPRIDLE CONFIGURATION
   # -----------------------------------------------------------
@@ -244,9 +209,10 @@ fi
     enable = true;
     settings = {
       general = {
+        ignore_dbus_inhibit = false;
         lock_cmd = "${config.home.homeDirectory}/.config/lock-safe.sh";
         before_sleep_cmd = "${config.home.homeDirectory}/.config/lock-safe.sh";
-        after_sleep_cmd = "${config.home.homeDirectory}/.config/dpms-safe.sh on";
+        after_sleep_cmd = "${config.home.homeDirectory}/.config/dpms-safe.sh on && ${pkgs.eww}/bin/eww open bar && ${config.home.homeDirectory}/.config/hypr/check-dock.sh";
       };
 
       listener = [
@@ -256,12 +222,23 @@ fi
         }
         {
           timeout = 80;
-          on-timeout = "${config.home.homeDirectory}/.config/dpms-safe.sh off";
-          on-resume = "${config.home.homeDirectory}/.config/dpms-safe.sh on";
+          # Turn off the display AND nuke the Eww daemon entirely
+          on-timeout = "${config.home.homeDirectory}/.config/dpms-safe.sh off && ${pkgs.eww}/bin/eww kill";
+          
+          # Turn on the display, spin Eww back up, AND run check-dock.sh
+          on-resume = "${config.home.homeDirectory}/.config/dpms-safe.sh on && ${pkgs.eww}/bin/eww open bar && ${config.home.homeDirectory}/.config/hypr/check-dock.sh";
+        }
+        {
+          # 3. Deep sleep system
+          timeout = 300;
+          on-timeout = "systemctl suspend";
         }
       ];
     };
   };
+
+  #"sleep 1 && hyprctl hyprpaper preload ${recoloredWallpaperPath}"
+  #"sleep 3 && hyprctl hyprpaper wallpaper ',${recoloredWallpaperPath}'"
 
   wayland.windowManager.hyprland = {
     enable = true;
@@ -273,10 +250,10 @@ fi
 
       exec-once = [
         "eww open bar"
+        "iio-hyprland &"
         "lxqt-policykit-agent &"
         "hyprctl dispatch workspace 1"
-        "sleep 1 && hyprctl hyprpaper preload ${wallpaper}"
-        "sleep 3 && hyprctl hyprpaper wallpaper ',${wallpaper}'"
+        "${config.home.homeDirectory}/.config/hypr/handle-rotation.sh &"
       ];
 
       env = [
@@ -386,6 +363,7 @@ fi
       bind = [
         "${mod}, m, exec, ${config.home.homeDirectory}/.config/lock-safe.sh"
         "${mod}, q, killactive,"
+        "${mod}, f, fullscreen,"
 
         "${mod}, left, movefocus, l"
         "${mod}, right, movefocus, r"
@@ -409,6 +387,29 @@ fi
       ) ++ (
         map (n: "${mod} SHIFT, ${toString n}, movetoworkspace, ${toString n}") (builtins.genList (x: x + 1) 9)
       );
+
+      # -----------------------------------------------------------
+      # MEDIA & BRIGHTNESS KEYS
+      # -----------------------------------------------------------
+      bindel = [
+        # Volume
+        ", XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
+        ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
+        
+        # Brightness
+        ", XF86MonBrightnessUp, exec, brightnessctl set 5%+"
+        ", XF86MonBrightnessDown, exec, brightnessctl set 5%-"
+      ];
+
+      bindl = [
+        # Mute
+        ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+        
+        # Optional: Media control keys (Play/Pause, Next, Previous)
+        ", XF86AudioPlay, exec, playerctl play-pause"
+        ", XF86AudioPrev, exec, playerctl previous"
+        ", XF86AudioNext, exec, playerctl next"
+      ];
     };
   };
 
@@ -508,6 +509,11 @@ fi
         halign = center
         valign = center
     }
+
+    auth { 
+      fingerprint:enabled = true
+      pam:enabled = true
+    }
   '';
 
   home.file.".config/swaync/config.json".text = ''
@@ -531,6 +537,25 @@ fi
   '';
 
   home.file.".config/eww/music-widget/assets/default.jpg".source = abstractWallpaper;
+
+  home.file.".config/hypr/check-dock.sh" = {
+    executable = true;
+    text = ''
+      #! /usr/bin/env nix-shell
+      #! nix-shell -i bash -p jq
+      
+      # Give Eww a brief moment to finish launching the daemon and bar
+      sleep 0.5
+      
+      ROT=$(hyprctl monitors -j | jq -r '.[] | select(.name == "eDP-1") | .transform')
+      
+      if [ "$ROT" = "1" ] || [ "$ROT" = "3" ]; then
+          eww open dock 2>/dev/null
+      else
+          eww close dock 2>/dev/null
+      fi
+    '';
+  };
 
   home.file.".config/swaync/style.css".text = ''
     @define-color base00 #${config.colorScheme.palette.base00};
@@ -600,7 +625,7 @@ fi
     enable = true;
     settings = {
       preload = [
-        "${wallpaper}"
+        "${recoloredWallpaperPath}"
       ];
       wallpaper = [
         # By display
@@ -611,7 +636,7 @@ fi
         # By default/fallback
         {
           monitor = "";
-          path = "${wallpaper}"; 
+          path = "${recoloredWallpaperPath}"; 
         }
       ];
     };

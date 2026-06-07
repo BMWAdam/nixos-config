@@ -145,7 +145,9 @@
   networking.firewall.allowedTCPPorts = [ 2234 2235 ];
 
   boot.loader.grub.theme = inputs.nixos-grub-themes.packages.${pkgs.system}.nixos;
-
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+  hardware.enableRedistributableFirmware = true;
+  
   boot.loader.efi.canTouchEfiVariables = true;
   hardware.uinput.enable = true;
 

@@ -11,11 +11,11 @@
 (defpoll song_length_s :interval "2s"
   "playerctl metadata mpris:length | awk '{print $1 / 1000000}' || echo 1")
 
-(defpoll song_position_s :interval "1s"
-  "playerctl position || echo 0")
+(deflisten song_position :initial "0:00"
+  "bash $HOME/.config/eww/music-widget/position.sh")
 
-(defpoll formatted_position :interval "1s"
-  "playerctl position -f '{{duration(position)}}' || echo '0:00'")
+(deflisten song_position_s :initial "0"
+  "bash $HOME/.config/eww/music-widget/position-s.sh")
 
 (defpoll cover_art_path :interval "1s"
   "$HOME/.config/eww/music-widget/get-cover.sh")
@@ -51,12 +51,11 @@
       (box :class "progress-container"
            :orientation "v"
            :space-evenly false
-        (label :class "position" :text formatted_position :halign "start")
+        (label :class "position" :text song_position :halign "start")
         (scale :class "progress-bar"
                :min 0
                :max song_length_s
-               :value song_position_s
-               :onchange "playerctl position {}")
+               :value song_position_s)
       )
 
       (box :class "controls"
@@ -85,7 +84,7 @@
   :geometry (geometry
     :x "20px"
     :y "20px"
-    :width "390px"
+    :width "300px"
     :height "160px")
   :wm-ignore true
   (music-widget))

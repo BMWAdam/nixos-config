@@ -1,8 +1,13 @@
+(deflisten rotation :initial "0"
+  "scripts/get-rotation")
+
 (defwidget bar []
-  (centerbox :orientation "h"
-    (workspaces)
-    (music_widget :value {music})
-    (sidestuff)))
+  (box :class {rotation == "1" || rotation == "3" ? "bar portrait" : "bar landscape"}
+    (centerbox :orientation "h"
+      (box :halign "start" :visible {rotation != "1" && rotation != "3"}
+        (workspaces))
+      (music_widget :value {music})
+      (sidestuff))))
 
 (defwidget sidestuff []
   (box :class "sidestuff" :orientation "h" :space-evenly false :halign "end"
@@ -28,10 +33,10 @@
         :onchange "scripts/setbrightness {}"
         :class "brightness")
     (metric :label {
-              battery <= 20 ? "" :
-              battery <= 40 ? "" :
-              battery <= 60 ? "" :
-              battery <= 80 ? "" : ""
+             battery <= 20 ? "" :
+             battery <= 40 ? "" :
+             battery <= 60 ? "" :
+             battery <= 80 ? "" : ""
           }
           :value battery
           :onchange ""
@@ -142,6 +147,19 @@
     (box :class "label" "󰃭 ")
     (box :class "text" {value})))
 
+;; --- New Bottom Applications Dock Widget ---
+(defwidget dock_widget []
+  (box :class "dock-base"
+       :orientation "h"
+       :space-evenly true
+       :halign "center"
+    (button :class "dock-btn" :onclick "firefox &" "󰈹 Firefox")
+    (button :class "dock-btn" :onclick "alacritty &" "󱆃 Alacritty")
+    (button :class "dock-btn" :onclick "thunar &" "󰝰 Files")
+    (button :class "dock-btn" :box "calibre" :onclick "calibre &" "󰂺 Calibre")
+    (button :class "dock-btn" :onclick "xournalpp &" "󰏪 XOurnal")))
+
+;; --- Windows Definitions ---
 (defwindow bar
   :monitor 0
   :windowtype "dock"
@@ -151,6 +169,19 @@
   :geometry (geometry :x "0%"
                       :y "0%"
                       :width "100%"
-                      :height "10px"
+                      :height "32px" ;; Changed to a static string
                       :anchor "top center")
   (bar))
+
+(defwindow dock
+  :monitor 0
+  :windowtype "dock"
+  :exclusive true
+  :focusable false
+  :stacking "fg"
+  :geometry (geometry :x "0%"
+                      :y "10px"
+                      :width "50%"
+                      :height "60px"
+                      :anchor "bottom center")
+  (dock_widget))

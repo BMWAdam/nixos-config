@@ -13,8 +13,54 @@
   color: colors.$base06;
   border-radius: 12px;
   margin: 4px 8px;
+  
+  // Smoothly animate the padding change when rotating
+  transition: padding 0.2s ease-in-out;
+
+  // Standard landscape compact sizing
+  &.landscape {
+    padding: 2px 8px;
+  }
+
+  // Taller portrait sizing for easy finger targets
+  &.portrait {
+    padding: 10px 14px;
+    
+    .label, .text {
+      font-size: 15px; // Boost text size slightly for readability on touch
+    }
+  }
 }
 
+// --- Brand New Bottom Dock Styles ---
+.dock-base {
+  background-color: rgba(
+    red(colors.$base02),
+    green(colors.$base02),
+    blue(colors.$base02),
+    0.95
+  );
+  border: 2px solid colors.$base03;
+  border-radius: 16px;
+  padding: 8px 16px;
+}
+
+.dock-btn {
+  color: colors.$base06;
+  font-family: "Symbols Nerd Font", "TeX Gyre Heros";
+  font-size: 16px;
+  background-color: colors.$base03;
+  padding: 8px 18px;
+  margin: 0 6px;
+  border-radius: 10px;
+  
+  &:hover {
+    background-color: colors.$base0c;
+    color: colors.$base01;
+  }
+}
+
+// Keep your existing styling rules intact below...
 .sidestuff slider {
   all: unset;
   color: colors.$base06;
@@ -109,15 +155,12 @@
 
 .workspace.activews {
   background-color: colors.$base0c;
-  //min-width: 17px;
-  //min-height: 12px;
 }
 
 .workspace.notactivews {
   background-color: colors.$base04;
 }
 
-// Music widget — Agave Nerd Font, centred
 .music {
   font-family: "Agave Nerd Font";
   font-size: 13px;
@@ -129,10 +172,6 @@
   font-family: "Agave Nerd Font";
   margin-left: 4px;
   margin-right: 4px;
-}
-
-.music-text {
-  // cursor: pointer;
 }
 
 .music-text:hover {

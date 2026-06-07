@@ -50,6 +50,10 @@ in
     pamixer
     cava
     curl
+    brightnessctl
+    xournalpp
+    thunar
+    texliveFull
   ];
 
 

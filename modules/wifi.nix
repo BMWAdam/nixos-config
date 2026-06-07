@@ -19,5 +19,17 @@
         psk = "$home_psk";
       };
     };
+
+    profiles."hotspot" = {
+      connection.id = "hotspot";
+      connection.type = "wifi";
+
+      wifi.ssid = "$hotspot_ssid";
+
+      wifi-security = {
+        key-mgmt = "wpa-psk";
+        psk = "$hotspot_psk";
+      };
+    };
   };
 }
