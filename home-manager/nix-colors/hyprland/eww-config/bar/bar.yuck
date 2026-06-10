@@ -112,7 +112,7 @@
 (deflisten brightness :initial "50"
   "scripts/getbrightness")
 
-(defpoll battery :interval "1s"
+(defpoll battery :interval "10s" :initial "100"
   "scripts/getbattery")
 
 (deflisten layout :initial "En"

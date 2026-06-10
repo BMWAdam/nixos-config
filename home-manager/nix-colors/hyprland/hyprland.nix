@@ -223,15 +223,15 @@ fi
         {
           timeout = 80;
           # Turn off the display AND nuke the Eww daemon entirely
-          on-timeout = "${config.home.homeDirectory}/.config/dpms-safe.sh off && ${pkgs.eww}/bin/eww kill";
+          on-timeout = "${config.home.homeDirectory}/.config/dpms-safe.sh off ; pkill eww";
           
           # Turn on the display, spin Eww back up, AND run check-dock.sh
-          on-resume = "${config.home.homeDirectory}/.config/dpms-safe.sh on && ${pkgs.eww}/bin/eww open bar && ${config.home.homeDirectory}/.config/hypr/check-dock.sh";
+          on-resume = "${config.home.homeDirectory}/.config/dpms-safe.sh on ; pkill eww ; sleep 0.5 ; ${pkgs.eww}/bin/eww open bar ; ${config.home.homeDirectory}/.config/hypr/check-dock.sh";
         }
         {
           # 3. Deep sleep system
           timeout = 300;
-          on-timeout = "systemctl suspend";
+          on-timeout = "pkill eww && systemctl suspend";
         }
       ];
     };
@@ -249,7 +249,7 @@ fi
       monitor = "eDP-1,2880x1800@120,auto,2,vrr,1";
 
       exec-once = [
-        "eww open bar"
+        "pkill eww ; sleep 1 ; eww open bar"
         "iio-hyprland &"
         "lxqt-policykit-agent &"
         "hyprctl dispatch workspace 1"

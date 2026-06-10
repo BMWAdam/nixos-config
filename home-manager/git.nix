@@ -8,14 +8,16 @@
     "*" = {
       ForwardAgent = "yes";
     };
-  };
-
-  programs.ssh.settings = {
     "github.com" = {
       hostname = "github.com";
       user = "git";
       identityFile = sshKeyPath;
       forwardAgent = true;
+    };
+    "catbot" = {
+      user = "catbot";
+      identityFile = sshKeyPath;
+      identitiesOnly = true;
     };
   };
 
