@@ -14,8 +14,10 @@
       identityFile = sshKeyPath;
       forwardAgent = true;
     };
-    "catbot" = {
+
+    "catbot-1" = {
       user = "catbot";
+      hostname = "catbot-1";
       identityFile = sshKeyPath;
       identitiesOnly = true;
     };
@@ -45,11 +47,6 @@
 
   services.ssh-agent.enable = true;
 
-  # -------------------------
-  # SYSTEMD USER SERVICES
-  # -------------------------
-
-  # 2. GPG setup
   systemd.user.services.gpg-setup = {
     Unit = {
       Description = "Declarative GPG key import";

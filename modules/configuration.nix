@@ -149,6 +149,9 @@
   hardware.enableRedistributableFirmware = true;
   
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+  nix.settings.trusted-users = [ "root" "bmwadam" ];
+
   hardware.uinput.enable = true;
 
   environment.sessionVariables = {

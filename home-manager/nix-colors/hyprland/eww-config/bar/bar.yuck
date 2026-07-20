@@ -11,6 +11,10 @@
 
 (defwidget sidestuff []
   (box :class "sidestuff" :orientation "h" :space-evenly false :halign "end"
+    ;; --- Added Sleep Toggle ---
+    (sleep_widget)
+    ;; --- Added the EQ widget right before volume ---
+    (eq_widget)
     (metric :label {volume < 1 ? ""  : 
                     volume < 15 ? "" :
                     volume <= 30 ? "" : 
@@ -89,6 +93,20 @@
         :onclick "eww open-many --toggle music-widget"
       {value == "" ? "" : value})))
 
+(defwidget sleep_widget []
+  (box :class "sleep-container"
+    (button :class "sleep-btn ${sleep_status == 'on' ? 'on' : 'off'}" 
+            :onclick "~/.config/toggle-sleep.sh &"
+            :tooltip {sleep_status == "on" ? "Auto-sleep Enabled" : "Auto-sleep Disabled"}
+      {sleep_status == "on" ? "󰒲" : "󰅶"})))
+
+(defwidget eq_widget []
+  (box :class "eq-container"
+    (button :class "eq-btn ${active_eq == '🔊 OFF' ? 'inactive' : 'active'}" 
+            :onclick "scripts/toggleeq"
+            :tooltip "Toggle Nix-EQ Preset"
+      {active_eq})))
+
 (defwidget metric [label value onchange class]
   (box :orientation "h"
        :class "metric ${class}"
@@ -102,6 +120,14 @@
 
 (deflisten music :initial ""
   "scripts/music")
+
+;; --- Active Sleep Status Poll ---
+(defpoll sleep_status :interval "2s" :initial "on"
+  "~/.config/get-sleep.sh")
+
+;; --- New Active EQ Poll (checks every 2 seconds) ---
+(defpoll active_eq :interval "1s" :initial "🎧 HP"
+  "scripts/geteq")
 
 (deflisten volume :initial "20"
   "scripts/getvol")
@@ -169,7 +195,7 @@
   :geometry (geometry :x "0%"
                       :y "0%"
                       :width "100%"
-                      :height "32px" ;; Changed to a static string
+                      :height "32px"
                       :anchor "top center")
   (bar))
 

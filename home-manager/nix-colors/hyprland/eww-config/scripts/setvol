@@ -1,13 +1,32 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
-# Check if the number of arguments is correct
 if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 percent"
+    echo "Usage: $0 <percent>"
+    echo "Example: $0 20"
     exit 1
 fi
 
-# Set the volume using pamixer
-pamixer --set-volume $1
+PERCENT="${1%\%}"
 
-# Optional: Notify the user of the change
-echo "Volume set to ${1}%"
+DEFAULT_NAME=$(wpctl inspect @DEFAULT_AUDIO_SINK@ 2>/dev/null | awk -F'"' '/node\.name/ {print $2}')
+
+if [[ "$DEFAULT_NAME" == "effect_input.nix_eq" ]]; then
+    # EQ is active: Parse wpctl status to find the hardware sink
+    TARGET=$(wpctl status | awk '/Sinks:/,/Sources:/ { 
+        if ($0 ~ /[0-9]+\./ && $0 !~ /HDMI/ && $0 !~ /DisplayPort/ && $0 !~ /nix_eq/) { 
+            match($0, /[0-9]+/)
+            id=substr($0, RSTART, RLENGTH)
+        } 
+    } END { print id }')
+    
+    if [[ -n "$TARGET" ]]; then
+        # Change the actual hardware volume (Speakers/Headphones)
+        wpctl set-volume "$TARGET" "${PERCENT}%"
+    fi
+    
+    # Lock the virtual EQ node at exactly 100% so it doesn't double-reduce the audio signal
+    wpctl set-volume @DEFAULT_AUDIO_SINK@ 1.0
+else
+    # EQ is off: behave normally
+    wpctl set-volume @DEFAULT_AUDIO_SINK@ "${PERCENT}%"
+fi

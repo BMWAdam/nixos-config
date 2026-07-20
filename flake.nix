@@ -10,6 +10,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     sops-nix.url = "github:Mic92/sops-nix";
     nixos-grub-themes.url = "github:jeslie0/nixos-grub-themes";
+    nix-eq.url = "github:BMWAdam/nix-eq";
 
     firefox-addons = {
       url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
@@ -26,6 +27,7 @@
     flake-utils,
     sops-nix,
     nixos-grub-themes,
+    nix-eq,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -45,7 +47,6 @@
           ./modules/omnibook/proximity.nix
           ./modules/omnibook/secrets.nix
           ./modules/omnibook/audio.nix
-          ./modules/omnibook/ollama.nix
           ./modules/omnibook/rotatescreen.nix
           ./modules/omnibook/fingerprint.nix
           ./modules/omnibook/hardware-configuration.nix

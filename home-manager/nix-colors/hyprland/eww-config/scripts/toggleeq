@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+PRESETS=$(nix-eq list-presets 2>/dev/null)
+
+if [[ -z "$PRESETS" || "$PRESETS" == "No presets configured" ]]; then
+    echo "No EQ presets found. Please check your nix-eq.json config."
+    exit 1
+fi
+
+mapfile -t PRESET_ARRAY <<< "$PRESETS"
+PRESET_ARRAY+=("OFF")
+
+CURRENT=$(nix-eq current-preset 2>/dev/null)
+
+CURRENT_INDEX=-1
+for i in "${!PRESET_ARRAY[@]}"; do
+    if [[ "${PRESET_ARRAY[$i]}" == "$CURRENT" || ("$CURRENT" == *"OFF"* && "${PRESET_ARRAY[$i]}" == "OFF") ]]; then
+        CURRENT_INDEX=$i
+        break
+    fi
+done
+
+NEXT_INDEX=$(( (CURRENT_INDEX + 1) % ${#PRESET_ARRAY[@]} ))
+TARGET="${PRESET_ARRAY[$NEXT_INDEX]}"
+
+if [[ "$TARGET" == "OFF" ]]; then
+    nix-eq off
+else
+    nix-eq toggle "$TARGET"
+    nix-eq on
+fi
+
+eww update active_eq="$($(dirname "$0")/geteq)"

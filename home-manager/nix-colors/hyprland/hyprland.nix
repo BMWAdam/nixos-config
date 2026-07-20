@@ -111,7 +111,6 @@ in {
     ${builtins.readFile ./eww-config/music-widget/base.eww.scss}
   '';
 
-
   home.file.".config/eww/_colors.scss" = {
     text = ''
       $base00: #${config.colorScheme.palette.base00};
@@ -163,6 +162,30 @@ if [ "$ACTION" = "off" ]; then
     hyprctl dispatch dpms off
 elif [ "$ACTION" = "on" ]; then
     hyprctl dispatch dpms on
+fi
+    '';
+  };
+
+  home.file.".config/get-sleep.sh" = {
+    executable = true;
+    text = ''
+#!/usr/bin/env bash
+if systemctl --user is-active --quiet hypridle.service; then
+    echo "on"
+else
+    echo "off"
+fi
+    '';
+  };
+
+  home.file.".config/toggle-sleep.sh" = {
+    executable = true;
+    text = ''
+#!/usr/bin/env bash
+if systemctl --user is-active --quiet hypridle.service; then
+    systemctl --user stop hypridle.service
+else
+    systemctl --user start hypridle.service
 fi
     '';
   };
@@ -236,9 +259,6 @@ fi
       ];
     };
   };
-
-  #"sleep 1 && hyprctl hyprpaper preload ${recoloredWallpaperPath}"
-  #"sleep 3 && hyprctl hyprpaper wallpaper ',${recoloredWallpaperPath}'"
 
   wayland.windowManager.hyprland = {
     enable = true;
@@ -345,9 +365,6 @@ fi
 
       misc = {
         vrr = 1;
-
-        #force_default_wallpaper = 0;
-        #disable_hyprland_logo = true;
       };
 
       layerrule = [
@@ -628,11 +645,6 @@ fi
         "${recoloredWallpaperPath}"
       ];
       wallpaper = [
-        # By display
-        # {
-        #   monitor = "DP-2";
-        #   path = "~/wallpapers/wallpaper2.jpg";
-        # }
         # By default/fallback
         {
           monitor = "";

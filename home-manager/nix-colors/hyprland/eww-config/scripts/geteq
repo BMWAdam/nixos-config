@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+STATE=$(nix-eq current-preset 2>/dev/null)
+
+if [[ -z "$STATE" || "$STATE" == *"OFF"* ]]; then
+    echo "🔊 OFF"
+else
+    echo "🎧 $STATE"
+fi

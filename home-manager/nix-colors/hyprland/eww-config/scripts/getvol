@@ -1,55 +1,44 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p pamixer gawk
+#! nix-shell -i bash -p wireplumber gawk
 
-if command -v pamixer &>/dev/null; then
-    if [ true == $(pamixer --get-mute) ]; then
-        echo 0
-        exit
+get_volume() {
+    local target
+    # Check what the current default sink is named
+    local default_name=$(wpctl inspect @DEFAULT_AUDIO_SINK@ 2>/dev/null | awk -F'"' '/node\.name/ {print $2}')
+    
+    if [[ "$default_name" == "effect_input.nix_eq" ]]; then
+        # EQ is active: Parse wpctl status to find the hardware sink (ignoring HDMI and the EQ itself)
+        target=$(wpctl status | awk '/Sinks:/,/Sources:/ { 
+            if ($0 ~ /[0-9]+\./ && $0 !~ /HDMI/ && $0 !~ /DisplayPort/ && $0 !~ /nix_eq/) { 
+                match($0, /[0-9]+/)
+                id=substr($0, RSTART, RLENGTH)
+            } 
+        } END { print id }')
     else
-        pamixer --get-volume
-    fi
-else
-    amixer -D pulse sget Master | awk -F '[^0-9]+' '/Left:/{print $3}'
-fi
-
-if command -v pamixer &>/dev/null; then
-    # Initial volume check
-    last_volume=$(pamixer --get-volume)
-    
-    # Check if muted
-    if [ true == $(pamixer --get-mute) ]; then
-        echo 0
-        exit
+        target="@DEFAULT_AUDIO_SINK@"
     fi
 
-    # Continuous loop
-    while true; do
-        current_volume=$(pamixer --get-volume)
-        
-        # If volume has changed, print the new volume
-        if [ "$current_volume" -ne "$last_volume" ]; then
-            echo "$current_volume"
-            last_volume="$current_volume"
-        fi
-        
-        # Sleep for a second before checking again
-        sleep 0.2
-    done
-else
-    # If pamixer is not available, fall back to amixer
-    last_volume=$(amixer -D pulse sget Master | awk -F '[^0-9]+' '/Left:/{print $3}')
-    
-    # Continuous loop
-    while true; do
-        current_volume=$(amixer -D pulse sget Master | awk -F '[^0-9]+' '/Left:/{print $3}')
-        
-        # If volume has changed, print the new volume
-        if [ "$current_volume" -ne "$last_volume" ]; then
-            echo "$current_volume"
-            last_volume="$current_volume"
-        fi
-        
-        # Sleep for a second before checking again
-        sleep 0.2
-    done
-fi
+    # Fallback just in case parsing fails
+    if [[ -z "$target" ]]; then
+        target="@DEFAULT_AUDIO_SINK@"
+    fi
+
+    wpctl get-volume "$target" | awk '
+        /\[MUTED\]/ { print 0; next }
+        { printf "%.0f\n", $2 * 100 }
+    '
+}
+
+last_volume=$(get_volume)
+echo "$last_volume"
+
+while true; do
+    current_volume=$(get_volume)
+
+    if [ "$current_volume" -ne "$last_volume" ]; then
+        echo "$current_volume"
+        last_volume="$current_volume"
+    fi
+
+    sleep 0.2
+done

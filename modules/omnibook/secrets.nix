@@ -32,6 +32,11 @@ in
         owner = "bmwadam";
         neededForUsers = false;
       };
+
+      sony_bt = {
+        owner = "bmwadam";
+        neededForUsers = false;
+      };
     };
 
     templates = {

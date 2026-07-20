@@ -1,39 +1,30 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p playerctl curl jq ollama
+#!/usr/bin/env nix-shell
+#! nix-shell -i bash -p playerctl mpc python3
 
-typewrite() {
-  local text="$1"
-  local i
-  for (( i=0; i<${#text}; i++ )); do
-    printf '%s\n' "${text:0:$((i+1))}"
-    sleep 0.07
+get_music() {
+  local title
+  title=$(playerctl metadata title 2>/dev/null)
+  
+  if [ -z "$title" ]; then
+    title=$(mpc current 2>/dev/null)
+  fi
+  
+  echo "$title"
+}
+
+stream_music() {
+  get_music
+
+  while true; do
+    if command -v playerctl >/dev/null 2>&1; then
+      playerctl metadata --format "{{title}}" --follow 2>/dev/null
+    fi
+    
+    echo ""
+    
+    sleep 2
+    get_music
   done
 }
 
-tmpfifo=$(mktemp -u)
-mkfifo "$tmpfifo"
-playerctl metadata --format "{{title}}" --follow > "$tmpfifo" &
-pid=$!
-
-trap "kill $pid; rm -f $tmpfifo" EXIT
-
-current_song=""
-
-while read -r song < "$tmpfifo"; do
-  if [[ -z "$song" ]]; then
-    if [[ -n "$current_song" ]]; then
-      echo ""
-      current_song=""
-    fi
-    continue
-  fi
-
-  if [[ "$song" != "$current_song" ]]; then
-    current_song="$song"
-    prompt="Respond with ONLY an emoji followed by the title. Pick an emoji that matches the mood/energy of: $song. Extract the name from the input and make it fit into ~15 chars, removing URLs, 'Official Video', remaster info, or tags and such. You are to extract info, as such do not include any other word that is not contained in the input"
-    result=$(ollama run llama3.2:3b "$prompt" 2>/dev/null | tr -d '\n' | xargs)
-    typewrite "$result"
-    # Final stable output
-    echo "$result"
-  fi
-done
+stream_music | python3 ~/.config/eww/music-widget/scroll.py 22 0.3

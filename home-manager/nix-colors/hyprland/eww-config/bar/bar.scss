@@ -60,6 +60,23 @@
   }
 }
 
+// --- New Sleep Toggle Button ---
+.sleep-btn {
+  font-family: "Symbols Nerd Font";
+  font-size: 18px;
+  color: colors.$base06;
+  padding: 0 6px;
+  margin-right: 6px;
+  
+  &:hover {
+    color: colors.$base0c;
+  }
+  
+  &.off {
+    color: colors.$base0a; // Highlights yellow/orange when keeping awake
+  }
+}
+
 // Keep your existing styling rules intact below...
 .sidestuff slider {
   all: unset;
@@ -233,4 +250,33 @@
 .music_ctrl_btn:hover {
   background-color: colors.$base03;
   color: colors.$base0c;
+}
+
+.eq-container {
+  margin-right: 8px;
+}
+
+.eq-btn {
+  font-family: "Symbols Nerd Font", "TeX Gyre Heros";
+  font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background-color: transparent;
+  transition: all 0.2s ease-in-out;
+  
+  color: colors.$base04; 
+  
+  &:hover {
+    background-color: colors.$base03;
+    color: colors.$base06;
+  }
+  
+  &.active {
+    color: colors.$base0c; // Uses your accent color to pop out
+    background-color: rgba(red(colors.$base0c), green(colors.$base0c), blue(colors.$base0c), 0.15);
+    
+    &:hover {
+      background-color: colors.$base03;
+    }
+  }
 }
