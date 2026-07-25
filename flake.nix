@@ -11,7 +11,8 @@
     sops-nix.url = "github:Mic92/sops-nix";
     nixos-grub-themes.url = "github:jeslie0/nixos-grub-themes";
     nix-eq.url = "github:BMWAdam/nix-eq";
-
+    nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
+    
     firefox-addons = {
       url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -28,6 +29,7 @@
     sops-nix,
     nixos-grub-themes,
     nix-eq,
+    nix-flatpak,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -43,6 +45,7 @@
         specialArgs = {inherit inputs outputs;};
 
         modules = [
+          nix-flatpak.nixosModules.nix-flatpak
           inputs.sops-nix.nixosModules.sops
           ./modules/omnibook/proximity.nix
           ./modules/omnibook/secrets.nix

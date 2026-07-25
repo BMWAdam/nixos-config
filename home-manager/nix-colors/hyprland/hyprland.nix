@@ -235,7 +235,7 @@ fi
         ignore_dbus_inhibit = false;
         lock_cmd = "${config.home.homeDirectory}/.config/lock-safe.sh";
         before_sleep_cmd = "${config.home.homeDirectory}/.config/lock-safe.sh";
-        after_sleep_cmd = "${config.home.homeDirectory}/.config/dpms-safe.sh on && ${pkgs.eww}/bin/eww open bar && ${config.home.homeDirectory}/.config/hypr/check-dock.sh";
+        after_sleep_cmd = "${config.home.homeDirectory}/.config/dpms-safe.sh on && ${config.home.homeDirectory}/.config/hypr/launch-eww.sh && ${config.home.homeDirectory}/.config/hypr/check-dock.sh";
       };
 
       listener = [
@@ -249,7 +249,7 @@ fi
           on-timeout = "${config.home.homeDirectory}/.config/dpms-safe.sh off ; pkill eww";
           
           # Turn on the display, spin Eww back up, AND run check-dock.sh
-          on-resume = "${config.home.homeDirectory}/.config/dpms-safe.sh on ; pkill eww ; sleep 0.5 ; ${pkgs.eww}/bin/eww open bar ; ${config.home.homeDirectory}/.config/hypr/check-dock.sh";
+          on-resume = "${config.home.homeDirectory}/.config/dpms-safe.sh on ; pkill eww ; sleep 0.5 ; ${config.home.homeDirectory}/.config/hypr/launch-eww.sh ; ${config.home.homeDirectory}/.config/hypr/check-dock.sh";
         }
         {
           # 3. Deep sleep system
@@ -260,19 +260,73 @@ fi
     };
   };
 
+  home.file.".config/hypr/lid-switch.sh" = {
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      
+      # Check how many monitors are connected
+      NUM_MONITORS=$(hyprctl monitors all -j | jq length)
+      
+      if [[ "$1" == "close" ]]; then
+          # Only disable the laptop screen if another monitor is plugged in
+          if [[ $NUM_MONITORS -gt 1 ]]; then
+              hyprctl keyword monitor "eDP-1, disable"
+          fi
+      elif [[ "$1" == "open" ]]; then
+          # Re-enable the laptop screen
+          hyprctl keyword monitor "eDP-1,2880x1800@120,auto,2,vrr,1"
+      fi
+      
+      # Reload Eww so it anchors correctly to the active display(s)
+      pkill eww
+      sleep 0.5
+      ${config.home.homeDirectory}/.config/hypr/launch-eww.sh
+    '';
+  };
+
+  home.file.".config/hypr/launch-eww.sh" = {
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+
+      # Kill any existing Eww processes
+
+      for m in $MONITORS; do
+          ${pkgs.eww}/bin/eww close bar -- --id "bar_$m" --arg monitor="$m"
+      done
+
+      pkill eww
+      sleep 0.5
+      pkill eww
+      sleep 1
+
+      # Get a list of all active monitor names from Hyprland (e.g., eDP-1, DP-1)
+      MONITORS=$(hyprctl monitors -j | jq -r '.[].name')
+
+      # Loop through each monitor and launch a bar with a unique ID
+      for m in $MONITORS; do
+          ${pkgs.eww}/bin/eww open bar --id "bar_$m" --arg monitor="$m"
+      done
+    '';
+  };
+
   wayland.windowManager.hyprland = {
     enable = true;
     systemd.enable = true;
     package = pkgs.hyprland;
 
     settings = {
-      monitor = "eDP-1,2880x1800@120,auto,2,vrr,1";
+      monitor = [
+        "eDP-1,2880x1800@120,0x0,2,vrr,1"
+        ",preferred,auto-right,1"
+      ];
 
       exec-once = [
-        "pkill eww ; sleep 1 ; eww open bar"
+        "${config.home.homeDirectory}/.config/hypr/launch-eww.sh &"
         "iio-hyprland &"
         "lxqt-policykit-agent &"
-        "hyprctl dispatch workspace 1"
+        "hyprctl dispatch workspace 1 &"
         "${config.home.homeDirectory}/.config/hypr/handle-rotation.sh &"
       ];
 
@@ -426,6 +480,10 @@ fi
         ", XF86AudioPlay, exec, playerctl play-pause"
         ", XF86AudioPrev, exec, playerctl previous"
         ", XF86AudioNext, exec, playerctl next"
+
+        # Lid switch binds
+        ", switch:on:Lid Switch, exec, ${config.home.homeDirectory}/.config/hypr/lid-switch.sh close"
+        ", switch:off:Lid Switch, exec, ${config.home.homeDirectory}/.config/hypr/lid-switch.sh open"
       ];
     };
   };

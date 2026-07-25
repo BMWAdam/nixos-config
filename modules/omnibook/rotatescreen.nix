@@ -22,4 +22,6 @@
       cp ${./ish_lnlm.bin} $out/lib/firmware/intel/ish/ish_lnlm.bin
     '')
   ];
+
+  services.hardware.bolt.enable = true;
 }

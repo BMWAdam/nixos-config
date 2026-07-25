@@ -11,9 +11,7 @@
 
 (defwidget sidestuff []
   (box :class "sidestuff" :orientation "h" :space-evenly false :halign "end"
-    ;; --- Added Sleep Toggle ---
     (sleep_widget)
-    ;; --- Added the EQ widget right before volume ---
     (eq_widget)
     (metric :label {volume < 1 ? ""  : 
                     volume < 15 ? "" :
@@ -121,11 +119,9 @@
 (deflisten music :initial ""
   "scripts/music")
 
-;; --- Active Sleep Status Poll ---
 (defpoll sleep_status :interval "2s" :initial "on"
   "~/.config/get-sleep.sh")
 
-;; --- New Active EQ Poll (checks every 2 seconds) ---
 (defpoll active_eq :interval "1s" :initial "🎧 HP"
   "scripts/geteq")
 
@@ -173,7 +169,6 @@
     (box :class "label" "󰃭 ")
     (box :class "text" {value})))
 
-;; --- New Bottom Applications Dock Widget ---
 (defwidget dock_widget []
   (box :class "dock-base"
        :orientation "h"
@@ -185,9 +180,9 @@
     (button :class "dock-btn" :box "calibre" :onclick "calibre &" "󰂺 Calibre")
     (button :class "dock-btn" :onclick "xournalpp &" "󰏪 XOurnal")))
 
-;; --- Windows Definitions ---
-(defwindow bar
-  :monitor 0
+;; --- UPDATED WINDOW BLOCKS ---
+(defwindow bar [monitor]
+  :monitor monitor
   :windowtype "dock"
   :exclusive true
   :focusable false
@@ -199,8 +194,8 @@
                       :anchor "top center")
   (bar))
 
-(defwindow dock
-  :monitor 0
+(defwindow dock [monitor]
+  :monitor monitor
   :windowtype "dock"
   :exclusive true
   :focusable false

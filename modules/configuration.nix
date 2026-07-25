@@ -112,6 +112,7 @@
     ollama
     fprintd
     lxqt.lxqt-policykit
+    freetube
   ];
 
   fonts = {
