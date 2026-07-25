@@ -7,14 +7,22 @@
   services.nix-eq = {
     enable = true;
     presets = {
-      sony = ./apo/sony.txt; 
+      sony = ./apo/sony.txt;
+      hd600 = ./apo/hd600.txt;
+      dt770 = ./apo/dt770.txt;
     };
   };
 
-  systemd.user.services.nix-eqd.postStart = ''
-    sleep 2
-    /run/current-system/sw/bin/nix-eq toggle sony
-  '';
+  systemd.user.services.nix-eqd = {
+    restartTriggers = [
+      (builtins.toJSON config.services.nix-eq.presets)
+    ];
+    
+    postStart = ''
+      sleep 2
+      /run/current-system/sw/bin/nix-eq toggle sony
+    '';
+  };
 
   services.pipewire = {
     enable = true;

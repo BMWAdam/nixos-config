@@ -55,6 +55,7 @@
           ./modules/omnibook/hardware-configuration.nix
           ./modules/configuration.nix
           ./modules/wifi.nix
+          #./modules/omnibook/battery-saver-dock.nix
         ];
       };
     };
